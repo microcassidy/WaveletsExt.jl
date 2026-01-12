@@ -12,6 +12,7 @@ include("mod/Denoising.jl")
 include("mod/LDB.jl")
 include("mod/Visualizations.jl")
 include("mod/WaveMult.jl")
+include("mod/LocalCosineBasis/LocalCosineBasis.jl")
 
 using Reexport
 @reexport using .DWT,
@@ -23,6 +24,6 @@ using Reexport
                 .SIWT,
                 .ACWT,
                 .Visualizations,
-                .WaveMult
-
+                .WaveMult,
+                .LocalCosineBasis
 end
