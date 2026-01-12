@@ -3,12 +3,18 @@ mutable struct Folded <: AbstractVector{Float64}
     data::Vector{Float64}
     length::Int
     max_length::Int
-    Folded(m::Int) = new(zeros(m),m,m)
+    Folded(m::Int) = new(zeros(Float64,m),m,m)
 end
-_update_size!(v::Folded,m::Int) = 1<=m<=v.max_length ? setfield(v,:length,m) : error("outside bounds of 1 and $(v.max_length)")
+_update_size!(v::Folded,m::Int) = 1<=m<=v.max_length ? setfield!(v,:length,m) : error("outside bounds of 1 and $(v.max_length)")
 Base.length(v::Folded) = v.length
-Base.size(v::Folded) = v.length
-Base.getindex(v::Folded,i::Int) = v.data[i]
+Base.size(v::Folded) = (v.length,)
+Base.getindex(v::Folded,i::Int) = Base.getindex(v.data,i)
+Base.setindex!(v::Folded,val::Float64,ind::Int) = setindex!(v.data,val,ind)
+Base.show(v::Folded) = show(v.data)
+
+Base.firstindex(v::Folded) = 1
+Base.lastindex(v::Folded) = v.length
+
 
 function pseudopacket(centre_packet::AbstractVector{Float64},bell::OrthonormalBell, side::Symbol)
     """
@@ -38,13 +44,18 @@ function _fold!(h::Folded,centre::AbstractVector{Float64},
     m = length(bell)
     n = length(centre)
 
+    @info "lengths: bell $m,centre $n,left: $(length(left)), right $(length(right))"
+    @assert length(h) == length(centre)
+
     # out = similar(centre)
     # fill!(out,0)
+    @info size(centre)
     for idx in 0:m-1
         #front
         h[idx+begin]= interior(bell)[idx+begin] * centre[idx+begin] + exterior(bell)[idx+begin] * left[end-m+1+idx]
         #back
-        h[end-m+1+idx]  = interior(bell)[idx+begin] * centre[end-m+1+idx] - exterior(bell)[idx+begin] * right[idx+begin]
+        @debug "h idx $(length(h) - m + 1 + idx)"
+        h[end-m+1+idx]  = interior(bell)[begin+idx] * centre[end-m+1+idx] - exterior(bell)[begin+idx] * right[begin+idx]
     end
-    out
+    nothing
 end

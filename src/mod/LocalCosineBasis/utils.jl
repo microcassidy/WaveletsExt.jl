@@ -1,5 +1,4 @@
-function dyad_length(v::Vector{<:Number})
-    n = length(v)
-    J = log2(n) |> Int
-    return J,n
+function dyad_length(l::Int)
+    J = Int(log2(n))
+    return J,l
 end
