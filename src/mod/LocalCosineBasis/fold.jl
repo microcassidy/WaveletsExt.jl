@@ -1,20 +1,4 @@
 
-mutable struct Folded <: AbstractVector{Float64}
-    data::Vector{Float64}
-    length::Int
-    max_length::Int
-    Folded(m::Int) = new(zeros(Float64,m),m,m)
-end
-_update_size!(v::Folded,m::Int) = 1<=m<=v.max_length ? setfield!(v,:length,m) : error("outside bounds of 1 and $(v.max_length)")
-Base.length(v::Folded) = v.length
-Base.size(v::Folded) = (v.length,)
-Base.getindex(v::Folded,i::Int) = Base.getindex(v.data,i)
-Base.setindex!(v::Folded,val::Float64,ind::Int) = setindex!(v.data,val,ind)
-Base.show(v::Folded) = show(v.data)
-
-Base.firstindex(v::Folded) = 1
-Base.lastindex(v::Folded) = v.length
-
 
 function pseudopacket(centre_packet::AbstractVector{Float64},bell::OrthonormalBell, side::Symbol)
     """
@@ -37,7 +21,7 @@ function pseudopacket(centre_packet::AbstractVector{Float64},bell::OrthonormalBe
     end
     packet
 end
-function _fold!(h::Folded,centre::AbstractVector{Float64},
+function _fold!(h::VariableVector,centre::AbstractVector{Float64},
                   left::AbstractVector{Float64},
                   right::AbstractVector{Float64},
                   bell::OrthonormalBell)

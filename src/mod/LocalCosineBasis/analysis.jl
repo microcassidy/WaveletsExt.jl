@@ -11,14 +11,20 @@ function reset!(tr::Matrix{Float64})
 end
 
 
-function lcb_step!(out::AbstractVector,
-                   h::Folded,
+"""
+out and packet are modified, the first 3 in place for
+partial application convenience
+"""
+function lcb_step!(v::Vector,
+                   bell::OrthonormalBell,
+                   packet::Packet,
+                    out::AbstractVector,
+                   h::VariableVector,
                    F::FFTWPlan,
                    j::Int,
                    block_size::Int,
-                   v::Vector,
-                   bell::OrthonormalBell,
                    )
+
     endi = 2^j-1
     @views for idx in 0:endi
         left = idx == 0 ? pseudopacket(v[begin:block_size],bell,:left) : v[(idx-1)*block_size+begin:(idx)*block_size]
@@ -48,22 +54,29 @@ function cost(tr::Matrix{Float64})::Vector{Float64}
     @assert i == ncost "ncost:$ncost i:$(i)"
     return cost_tr
 end
-
-flush_tree!(tr::AbstractArray{<:Number}) = fill!(tr,0)
+#TODO: get Packet struct working
+# reset!(tr::AbstractArray{<:Number}) = fill!(tr,0))
+fix_n(f,args...) = foldl(Base.Fix1,args;init=f)
 function analysis(L::Int;max_depth::Int=4)
     J = Int(log2(L))
     m = div(L,1 << (max_depth + 1))
     bell = OrthonormalBell(m)
+    packet = Packet(L)
 
     plans = plan_dct_iv(L,max_depth)
     coef_tree = Matrix{Float64}(undef, (L, max_depth + 1))
     fill!(coef_tree,0)
-    h = Folded(L)
+    h = VariableVector(L)
     function run(v::Vector)
-        flush_tree!(coef_tree)
-        _lcb_step! = Base.Fix{6}(Base.Fix{6}(lcb_step!, v), bell)
+        reset!(coef_tree)
+        reset!(packet)
+        # _lcb_step! = foldr(x->Base.Fix{6},)
+        # t = Base.Fix{6}((x,y) -> Base.Fix{6}(x), [v,bell,packet])
+        _lcb_step! = fix_n(lcb_step!, v, bell, packet)
+        @info _lcb_step!
+        @info methods(_lcb_step!)
         @assert length(v) == L
-        flush_tree!(coef_tree)
+        reset!(coef_tree)
         for j in 0:max_depth
             block_size = L ÷ 2^j
             _update_size!(h,block_size)
