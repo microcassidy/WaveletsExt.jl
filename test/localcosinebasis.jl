@@ -1,8 +1,17 @@
-using WaveletsExt:LocalCosineBasis
+using WaveletsExt:LocalCosine
 
-data = rand(Float64, 1024)
-fit = LocalCosineBasis.analysis(1024)
-results = fit(data);
-cost = LocalCosineBasis.cost(results);
-@info "tree size:$(size(results)), cost size $(size(cost))"
-@info cost[1:10]
+data = ones(1024)
+lcb = LocalCosineBasis()
+results = analysis_operator(lcb,data)
+
+fill!(lcb.packet.left,1)
+fill!(lcb.packet.right,1)
+fill!(lcb.packet.centre,1)
+LocalCosine.fold!(lcb)
+using Plots
+savefig(plot(lcb.packet.centre), "unit_response_fold.png")
+
+# using BenchmarkTools
+# f() = LocalCosine.fold!(lcb)
+# f()
+# @benchmark f()

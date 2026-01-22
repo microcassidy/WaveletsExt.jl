@@ -5,6 +5,7 @@ authors = ["Zeng Fung Liew <lzfliew@ucdavis.edu>", "Shozen Dan <shodan@ucdavis.e
 
 [deps]
 AverageShiftedHistograms = "77b51b56-6f8f-5c3a-9cb4-d71f9594ea6e"
+BenchmarkTools = "6e4b80f9-dd63-53aa-95a3-0cdb28fa8baf"
 Combinatorics = "861a8166-3701-5b0c-9a16-15d98fcdc6aa"
 Distributions = "31c24e10-a181-5473-b8eb-7969acd0382f"
 FFTW = "7a1cc6ca-52ef-59f5-83cd-3a7055c09341"
@@ -21,6 +22,7 @@ Wavelets = "29a6e085-ba6d-5f35-a997-948ac2efa89a"
 
 [compat]
 AverageShiftedHistograms = "0.8, 0.9"
+BenchmarkTools = "1.6.3"
 Combinatorics = "1"
 Distributions = "0.24, 0.25"
 FFTW = "1.10.0"

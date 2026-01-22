@@ -158,7 +158,6 @@ function dyadic_decomposition(height=10)
             @debug "L:$L"
             ℱ = plans[j + 1]
             _window = repeat(g(L),1,d)
-            # #@info "window : $_window"
             partitions = reshape(x,(L ,2^j))
             @debug size(partitions),size(_window)
             transforms = Complex.(ℱ * partitions)
@@ -233,11 +232,8 @@ function test_time_freq()
 
         plt2 = plot(dct(chunk))
         v = reduce(vcat, coefficients)
-        @info "local cosine energy : $(energy(v))"
         @assert length(v) == 1024
         _dct = dct(chunk)
-        @info "dct energy : $(energy(_dct))"
-        @info "chunk energy : $(energy(_dct))"
         pltdct = plot(abs.(_dct),title= "1024 point dct")
         pltlocal = plot(abs.(v),title = "local cosine basis")
         savefig(plot(pltdct,pltlocal), "local_cosine_compare_chunk$i.png")
