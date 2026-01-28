@@ -32,6 +32,10 @@ using
     Random, 
     ImageQualityIndexes
 
+abstract type AbstractTree end
+abstract type QuadTree <: AbstractTree end
+abstract type BinaryTree <: AbstractTree end
+
 # `maxtransformlevels` of a specific dimension
 """
     maxtransformlevels(n)
@@ -462,7 +466,38 @@ getrowrange(8,3)            # 1:4
 
 **See also:** [`Wavelets.Util.maketree`](@ref), [`getcolrange`](@ref)
 """
-function getrowrange(n::T, idx::T) where T<:Integer
+
+
+function getrowrange(n::T, idx::T,type::Symbol=:quad) where T<:Integer
+    if type == :binary
+        getrowrange(BinaryTree,n,idx)
+    elseif type == :quad
+        getrowrange(QuadTree,n,idx)
+    else
+        error("notimplemented")
+    end
+end
+
+# isdyadic(n::Int) = 2^floor(log2(n)) == 2^log2(n)
+function getrowrange(::Type{BinaryTree}, n::T, idx::T) where T<:Integer
+    if idx == 1
+        return 1:n
+    else
+        @info idx
+        # Get parent node's row range and midpoint of the range.
+        # parent_idx = idx
+        parent_idx = getparentindex(idx,:binary)
+        parent_rng = getrowrange(BinaryTree,n, parent_idx)
+        start,stop = (parent_rng.start, parent_rng.stop)
+        midpoint = div(start+stop,2)
+        L,R = UnitRange(start,midpoint),UnitRange(midpoint+1:stop)
+        @assert iseven(length(L)) "$(length(L))"
+        @assert iseven(length(R)) "$(length(R))"
+        return iseven(idx) ? L : R
+    end
+end
+
+function getrowrange(::Type{QuadTree}, n::T, idx::T) where T<:Integer
     # Sanity check
     L₀ = maxtransformlevels(n)
     k = (1<<(2*L₀+2)-1)÷3       # (= sum(4^(0:L₀)))
@@ -487,6 +522,24 @@ function getrowrange(n::T, idx::T) where T<:Integer
             return (midpoint+1):parent_rng[end]
         end
     end
+end
+
+export bestbasis_treemask
+function bestbasis_treemask(::Type{BinaryTree},bb::BitVector,n::Int,coef_tr::Array{Float64,3})
+    bb_idxs = findall(bb)
+    out = BitArray(undef,size(coef_tr))
+    fill!(out,zero(eltype(out)))
+    row_ranges = Vector{UnitRange}(undef,length(bb_idxs))
+    col_idxs = map(x-> Int64(floor(log2(x))) + 1, bb_idxs)
+    map!(idx-> getrowrange(BinaryTree,n,idx),row_ranges,bb_idxs)
+    for i in 1:size(out,3)
+        for (r,c) in zip(row_ranges,col_idxs)
+            #@info (r,c)
+            #@info "bang"
+            fill!(view(out,r,c,i),true)
+        end
+    end
+    out
 end
 
 # Get range of particular column from a given signal length and quadtree index

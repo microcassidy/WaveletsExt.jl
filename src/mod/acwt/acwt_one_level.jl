@@ -103,7 +103,7 @@ function acdwt_step!(w₁::AbstractVector{T},
                      v::AbstractVector{T}, 
                      d::Integer, 
                      h::Array{T,1}, 
-                     g::Array{T,1}) where {T<:Number, S<:Number}
+                     g::Array{T,1}) where {T<:Number}#, S<:Number}
     # Sanity check
     @assert length(w₁) == length(w₂) == length(v)
     @assert length(h) == length(g)

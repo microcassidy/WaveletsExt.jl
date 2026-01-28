@@ -35,10 +35,33 @@ function analysis_step!(out::AbstractVector{Float64},
     endi = 2^j-1
     f = lcb.dct_plans[j+1]
     # @boundscheck checkbounds(v,1:block_size*endi)
-    @inbounds for idx in 0:endi
-        copyto!(lcb.packet.centre,v[idx*block_size+begin:(idx+1)*block_size]);
-        idx == 0 ? foldedge!(LeftPacket, lcb) : set!(LeftPacket,lcb,v[(idx-1)*block_size+begin:(idx)*block_size])
-        idx == endi ? foldedge!(RightPacket,lcb) : set!(RightPacket,lcb,v[idx*block_size+begin:(idx+1)*block_size])
+    # @info "packet length $(length(lcb.packet.centre))"
+    m = lcb.m
+    ranges = [block_size*i+1:block_size*(i+1) for i in 0:endi]
+    for idx in 0:endi
+        crange = ranges[idx+begin]
+        rrange=nothing
+        lrange=nothing
+        copyto!(lcb.packet.centre,v[crange]);
+        if idx == 0
+            foldedge!(LeftPacket, lcb)
+        else
+            lrange = ranges[idx-1+begin]
+            lrange = lrange.stop-m+1:lrange.stop
+            lcb.packet.left = v[lrange]
+        end
+
+            # set!(LeftPacket,lcb,v[(idx-1)*block_size+begin:(idx)*block_size])
+        if idx == endi
+            foldedge!(RightPacket,lcb)
+        else
+            # trange = idx*block_size+firstindex(v):(idx+1)*block_size
+            rrange = ranges[idx+1+begin]
+            rrange = rrange.start:rrange.start+m-1
+            # #@info "$lrange $crange $rrange"
+            lcb.packet.right =v[rrange]
+            # set!(RightPacket,lcb)
+        end
         fold!(lcb)
         out[(idx*block_size)+1:(idx+1)*block_size] = f * lcb.packet.centre
     end
@@ -51,20 +74,26 @@ function analysis_operator(lcb::LocalCosineBasis,v::AbstractVector{Float64})
     coef_tree = Array{Float64}(undef, (lcb.N,lcb.J + 1, nblocks)) #(n, n_decompositions, n_blocks)
     analysis_operator!(coef_tree,lcb,v)
 end
-function analysis_operator!(coef_tree::Array{Float64,3},
-                            lcb::LocalCosineBasis,
-                            v::AbstractVector{Float64})
+function analysis_operator!(coef_tree::Array{Float64,3}, lcb::LocalCosineBasis, v::AbstractVector{Float64})
     n,m,o = size(coef_tree)
+    #@info size(coef_tree)
     # @boundscheck checkbounds(v, 1:n*o,v)
-    @inbounds for blockindex in 0:o-1
+    @assert m - 1 == lcb.max_depth "$m:$(lcb.max_depth)"
+    for blockindex in 0:o-1
         for j in 0:lcb.max_depth
             reset!(lcb.packet) #probably unnecessary, just as a precaution
             block_size = lcb.N ÷ 2^j
             _update_size!(lcb.packet,block_size)
             analysis_step!(view(coef_tree,:,j+1, blockindex+1),
-                           v[(blockindex*lcb.N)+1:lcb.N*(blockindex + 1)],
+                           v[(blockindex)*lcb.N+begin:lcb.N*(blockindex + 1)],
                            lcb,
                            block_size, j)
+            # #@info "---"
+            # # for i in 0:j
+            # #@info coef_tree[1:4,j+begin]
+            # # end
+            # #@info "---"
+            # j == 2 && error("foo")
         end
     end
 end
