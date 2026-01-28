@@ -50,7 +50,7 @@ lsum!(p::Packet) = p.centre[1:length(p.left)] += p.left
 rsum!(p::Packet) = p.centre[1:length(p.right)] += p.right
 
 lsum!(b::LocalCosineBasis) = b.packet.centre[1:length(b.packet.left)] += b.packet.left
-rsum!(b::LocalCosineBasis) = b.packet.centre[end-b.m+1:end] += b.packet.left
+rsum!(b::LocalCosineBasis) = b.packet.centre[end-b.m+1:end] += b.packet.right
 function lrsum(p::Packet)
     lsum(p)
     rsum(p)
@@ -88,7 +88,7 @@ function synthesis_operator!(out::Vector{Float64}, v::Vector{Float64},
                 set!(CentrePacket,lcb,F \ vw[ri])
                 unfold!(lcb)
                 count == 1 ? unfoldedge!(LeftPacket,lcb) : lsum!(lcb)
-                count == length(basis_idxs) ? unfoldedge!(LeftPacket,lcb) : rsum!(lcb)
+                count == length(basis_idxs) ? unfoldedge!(RightPacket,lcb) : rsum!(lcb)
                 ov[ri] = lcb.packet.centre
             end
     end

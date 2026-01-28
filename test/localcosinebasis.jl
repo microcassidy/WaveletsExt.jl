@@ -63,7 +63,7 @@ import WaveletsExt.BestBasis: bestbasis_treeselection
 
 @testset "analysis/synthesis" begin
     # input = [sin(2π*t/1024) for t in 0:(1024*3)-1]
-    input = ones(1024*3)
+    input = rand(1024*3)
     output = similar(input)
     @assert length(input) == 3*1024
     # input = ones(Float64,1024*3)
@@ -103,7 +103,7 @@ import WaveletsExt.BestBasis: bestbasis_treeselection
     vline!(plt,(1:6).*512,col=:red)
 
     savefig(plt,"test_synthesis.pdf")
-    @test isapprox(output-input,0;atol=10^-5)
+    @test input ≈ output
 end
 
 @testset "rowindexes" begin
