@@ -11,7 +11,6 @@ function grouped_ssq!(o::AbstractVector{Float64}, v::Vector{Float64},j::Int64)
     bs = reshape(v,block_size,nblocks)
     for idx in 1:nblocks
         o[idx] += norm(bs[:,idx],2)^2
-        # j==0 && #@info o[idx]
     end
 end
 
@@ -24,7 +23,6 @@ function cost!(out::Vector{Float64},m::AbstractMatrix{Float64})
         nblocks = 2^j
 
         ov = @view out[bottom:bottom+nblocks-1]
-        #@info "$(length(ov)); $(bottom:bottom+nblocks-1)"
         grouped_ssq!(ov,m[:,j+begin],j)
         bottom += nblocks
     end

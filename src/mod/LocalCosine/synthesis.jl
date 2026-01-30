@@ -57,7 +57,7 @@ function lrsum(p::Packet)
 end
 
 function synthesis_operator!(out::Vector{Float64}, v::Vector{Float64},
-                            lcb::LocalCosineBasis,plan::SynthesisPlan,bb::BitVector)
+                            lcb::LocalCosineBasis,bb::BitVector)
     # N,J,nblocks = size(c)
     # N =
     # isleft = true
@@ -70,7 +70,6 @@ function synthesis_operator!(out::Vector{Float64}, v::Vector{Float64},
 
 
     col_idxs = map(idx->Int64(floor(log2(idx)))+1,basis_idxs)
-    @info col_idxs
     row_ranges = map(idx->getrowrange(BinaryTree,lcb.N,idx),basis_idxs)
     # col_ranges = map(idx->getcolrange(lcb.N,idx,:binary),basis_idxs)
     for block_offset in 0:nblocks_sig-1
@@ -83,8 +82,6 @@ function synthesis_operator!(out::Vector{Float64}, v::Vector{Float64},
                 _update_size!(lcb.packet,length(ri))
 
                 F = lcb.dct_plans[ci]
-                @info F
-                @info length(ri)
                 set!(CentrePacket,lcb,F \ vw[ri])
                 unfold!(lcb)
                 count == 1 ? unfoldedge!(LeftPacket,lcb) : lsum!(lcb)

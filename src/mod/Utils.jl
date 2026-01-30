@@ -483,7 +483,6 @@ function getrowrange(::Type{BinaryTree}, n::T, idx::T) where T<:Integer
     if idx == 1
         return 1:n
     else
-        @info idx
         # Get parent node's row range and midpoint of the range.
         # parent_idx = idx
         parent_idx = getparentindex(idx,:binary)
@@ -534,8 +533,6 @@ function bestbasis_treemask(::Type{BinaryTree},bb::BitVector,n::Int,coef_tr::Arr
     map!(idx-> getrowrange(BinaryTree,n,idx),row_ranges,bb_idxs)
     for i in 1:size(out,3)
         for (r,c) in zip(row_ranges,col_idxs)
-            #@info (r,c)
-            #@info "bang"
             fill!(view(out,r,c,i),true)
         end
     end

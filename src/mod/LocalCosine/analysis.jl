@@ -11,10 +11,6 @@ function coefficient_tree(n::Int64,max_depth::Int64)
 end
 # reset!(tr::Matrix{Float64}) = fill!(tr,0)
 
-function dyadic_length(i::Int64)
-    J = floor(log2(i))
-    exp2(J) == i ? J : error("vector length needs to be a power of two.")
-end
 
 
 
@@ -35,7 +31,6 @@ function analysis_step!(out::AbstractVector{Float64},
     endi = 2^j-1
     f = lcb.dct_plans[j+1]
     # @boundscheck checkbounds(v,1:block_size*endi)
-    # @info "packet length $(length(lcb.packet.centre))"
     m = lcb.m
     ranges = [block_size*i+1:block_size*(i+1) for i in 0:endi]
     for idx in 0:endi
@@ -58,7 +53,6 @@ function analysis_step!(out::AbstractVector{Float64},
             # trange = idx*block_size+firstindex(v):(idx+1)*block_size
             rrange = ranges[idx+1+begin]
             rrange = rrange.start:rrange.start+m-1
-            # #@info "$lrange $crange $rrange"
             lcb.packet.right =v[rrange]
             # set!(RightPacket,lcb)
         end
@@ -76,7 +70,6 @@ function analysis_operator(lcb::LocalCosineBasis,v::AbstractVector{Float64})
 end
 function analysis_operator!(coef_tree::Array{Float64,3}, lcb::LocalCosineBasis, v::AbstractVector{Float64})
     n,m,o = size(coef_tree)
-    #@info size(coef_tree)
     # @boundscheck checkbounds(v, 1:n*o,v)
     @assert m - 1 == lcb.max_depth "$m:$(lcb.max_depth)"
     for blockindex in 0:o-1
@@ -88,11 +81,8 @@ function analysis_operator!(coef_tree::Array{Float64,3}, lcb::LocalCosineBasis, 
                            v[(blockindex)*lcb.N+begin:lcb.N*(blockindex + 1)],
                            lcb,
                            block_size, j)
-            # #@info "---"
             # # for i in 0:j
-            # #@info coef_tree[1:4,j+begin]
             # # end
-            # #@info "---"
             # j == 2 && error("foo")
         end
     end
