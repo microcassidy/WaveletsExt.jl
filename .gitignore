@@ -25,3 +25,6 @@ docs/site/
 
 # VS Code local environment settings
 .vscode/
+
+**.DS_STORE
+**tags
