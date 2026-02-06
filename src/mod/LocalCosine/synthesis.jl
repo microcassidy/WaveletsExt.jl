@@ -8,6 +8,7 @@
 export SynthesisPlan
 import .Utils:BinaryTree
 struct SynthesisPlan <: AbstractVector{Tuple{UnitRange,Int64}}
+# import Datastructures:Stack
 
     subsets::Vector{UnitRange}
     dctidx::Vector{Int64}
@@ -50,12 +51,17 @@ lsum!(p::Packet) = p.centre[1:length(p.left)] += p.left
 rsum!(p::Packet) = p.centre[1:length(p.right)] += p.right
 
 lsum!(b::LocalCosineBasis) = b.packet.centre[1:length(b.packet.left)] += b.packet.left
-rsum!(b::LocalCosineBasis) = b.packet.centre[end-b.m+1:end] += b.packet.right
-function lrsum(p::Packet)
-    lsum(p)
-    rsum(p)
+function rsum!(b::LocalCosineBasis)
+    @info "lasindex centre : $(lastindex(b.packet.centre))"
+    b.packet.centre[lastindex(b.packet.centre)-b.m+1:lastindex(b.packet.centre)] += b.packet.right
+end
+function lrsum!(b::LocalCosineBasis)
+    lsum!(b)
+    rsum!(b)
 end
 
+
+@inline _nodeidx(depth,block)::Int64 = (1 << depth) + block
 function synthesis_operator!(out::Vector{Float64}, v::Vector{Float64},
                             lcb::LocalCosineBasis,bb::BitVector)
     # N,J,nblocks = size(c)
@@ -71,22 +77,70 @@ function synthesis_operator!(out::Vector{Float64}, v::Vector{Float64},
 
     col_idxs = map(idx->Int64(floor(log2(idx)))+1,basis_idxs)
     row_ranges = map(idx->getrowrange(BinaryTree,lcb.N,idx),basis_idxs)
+    @assert length(col_idxs) == length(row_ranges)
     # col_ranges = map(idx->getcolrange(lcb.N,idx,:binary),basis_idxs)
+    @debug "LOOP ENTRY-----"
+    #TODO: the ordering is wrong and will break for more complex basis trees I think
+    #need inorder traversal
+    #
+    # stack = Stack{Tuple{Int64,Int64}}([(0,0)])
+    out .= 0
+
+
+    @inline m = lcb.m
     for block_offset in 0:nblocks_sig-1
             for (count,(ri,ci)) in enumerate(zip(row_ranges,col_idxs))
+                @debug "count: $count"
+                @debug "\t--LOOP BEGIN---"
+                @debug "ri:$ri ci:$ci"
+                _update_size!(lcb.packet,length(ri))
+                lcb.packet.left .=0
+                lcb.packet.right .= 0
+                lcb.packet.centre .= 0
                 # @assert ri
-                vw = @view v[block_offset*lcb.N+begin:(block_offset+1)*lcb.N]
-                ov = @view out[block_offset*lcb.N+begin:(block_offset+1)*lcb.N]
+                rng = block_offset*lcb.N+1:(block_offset+1)*lcb.N
+                vw = @view v[rng]
+                ov = @view out[rng]
+
+                @info "ri length :$(length(ri))"
+                @info (ri.start,ri.stop)
+
+                @info (firstindex(vw),lastindex(vw))
+                @info (firstindex(ov),lastindex(ov))
+
                 fill!(lcb.packet.left,0)
                 fill!(lcb.packet.right,0)
-                _update_size!(lcb.packet,length(ri))
-
+                @warn "in testing, do not use"
                 F = lcb.dct_plans[ci]
-                set!(CentrePacket,lcb,F \ vw[ri])
+                # set!(CentrePacket,lcb,F \ vw[ri])
+                copyto!(lcb.packet.centre,F \ vw[ri])
+
                 unfold!(lcb)
-                count == 1 ? unfoldedge!(LeftPacket,lcb) : lsum!(lcb)
-                count == length(basis_idxs) ? unfoldedge!(RightPacket,lcb) : rsum!(lcb)
-                ov[ri] = lcb.packet.centre
+
+                ov[ri] += lcb.packet.centre
+
+                if ri.start == 1
+                    @debug "unfolding left packet"
+                    unfoldedge!(LeftPacket,lcb)
+                    # ov[ri.start:ri.start+m-1] += lcb.packet.left
+                    ov[begin:m] += lcb.packet.left
+                else
+                    ov[reverse(ri.start-1-m+1:ri.start-1)] += lcb.packet.left
+                    # lsum!(lcb)
+                end
+
+                # if count == lastindex(col_idxs)
+                if ri.stop == lastindex(v)
+                    @debug "unfolding right packet"
+                    unfoldedge!(RightPacket,lcb)
+                    ov[reverse(ri.stop-m+1:end)] += lcb.packet.right
+                else
+                ov[ri.stop+1:ri.stop+m] += lcb.packet.right
+                # rsum!(lcb)
+                end
+                # lrsum!(lcb.packet)
+                # ov[ri] = lcb.packet.centre
+                @debug "\t--LOOP END---"
             end
     end
 

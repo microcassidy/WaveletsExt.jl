@@ -41,3 +41,24 @@ function cost!(out::Vector{Float64}, coef_tree::Array{Float64,3})
         out ./= T(n+1)
     end
 end
+
+export cost_test
+function cost_test(coef_tree)
+    nlevels = size(coef_tree,2)-1
+    nblocks = size(coef_tree,3)
+    out = zeros(2^(nlevels+1) - 1)
+    for x in eachslice(coef_tree,dims=3)
+        ss = norm(x[:,1],2) #total energy
+        s
+        bottom = 1
+        for (idx,c) in enumerate(eachcol(x))
+            m = reshape(c,:,2^(idx-1))
+            t  = abs.(x) / ss #normalize
+            v = vcat(map(x->sum(t.^2),eachcol(m)))
+            @info "vlength :$(length(v))"
+            out[bottom:bottom+length(v)-1] += v
+            bottom+=length(v)
+        end
+    end
+    return out ./ size(coef_tree,3)
+end

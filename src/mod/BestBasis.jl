@@ -109,6 +109,40 @@ function bestbasis_treeselection(costs::AbstractVector{T},
     return tree
 end
 
+function isleaf(tree::BitVector,i::Int)
+    li,ri = (getchildindex(i,:left),getchildindex(i,:right))
+    !(checkindex(Bool, eachindex(tree),li) && checkindex(Bool, eachindex(tree),ri))
+end
+export prune!
+function prune!(tree::BitVector,costs::Vector{Float64})
+    l = length(tree)  #2^(J+1) - 1
+    J = Int64(log2(l + 1) - 1)
+    @info "J:$(J)"
+    size_leaf = 2^J #number of nodes contained in the final decomposition level
+    costs_copy = copy(costs)
+    for i in reverse(eachindex(tree[begin:end-size_leaf]))
+        # parent_idx = getparentindex(i,:binary)
+        # isleaf(tree, i) && continue
+        li,ri = (getchildindex(i,:left),getchildindex(i,:right))
+        lc,rc = (costs_copy[li],costs_copy[ri])
+        childcost = lc + rc
+        should_split = childcost > costs_copy[i]
+        if should_split
+            tree[i] = false
+            costs_copy[i] = cc
+        else
+            # if checkindex(Bool,eachindex(tree),li)
+                tree[li] = false
+            # end
+
+            # if checkindex(Bool,eachindex(tree),ri)
+                tree[ri] = false
+                # delete_subtree!(tree,ri,:binary)
+            # end
+        end
+    end
+end
+
 # Deletes subtree due to inferior cost
 """
     delete_subtree!(bt, i, tree_type)

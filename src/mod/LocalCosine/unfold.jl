@@ -5,19 +5,24 @@ function unfoldedge!(::Type{LeftPacket}, lcb::LocalCosineBasis)
 	front = 1:m
 	# for idx in 0:lcb.m-1
 		# lcb.packet.left[begin+idx] = lcb.packet.centre[begin+idx] * (1 - lcb.bell.interior[begin+idx]) / lcb.bell.interior[begin+idx]
-	lcb.packet.centre[front] += lcb.packet.centre[front] .* (1 .- lcb.bell.interior) ./ lcb.bell.interior
+	lcb.packet.left[front] = lcb.packet.centre[front] .* (1 .- lcb.bell.interior) ./ lcb.bell.interior
 	# end
 end
 function unfoldedge!(::Type{RightPacket}, lcb::LocalCosineBasis)
 	# set!(LeftPacket, lcb, lcb.centre)
 	m = lcb.m
+    @info "unfold-lasindex centre : $(lastindex(lcb.packet.centre))"
 	n = length(lcb.packet.centre)
-	back  = n:-1:(n-m+1)
+	@info "n: $n"
+	# back  = n:-1:(n-m+1)
+	back  = lastindex(lcb.packet.centre):-1:lastindex(lcb.packet.centre)-m+1
 	front = 1:m
 	# lcb.packet.centre[end-m+1:end] += lcb.packet.centre[end-idx]
 
-	lcb.packet.centre[back] += lcb.packet.centre[back] .* (1 .- lcb.bell.interior) ./ lcb.bell.interior
-	nothing
+	lcb.packet.right[front] = lcb.packet.centre[back] .* (1 .- lcb.bell.interior) ./ lcb.bell.interior
+
+	# lcb.packet.centre[]+= lcb.packet.centre[back] .* (1 .- lcb.bell.interior) ./ lcb.bell.interior
+	# nothing
 end
 	# for idx in 0:m-1
 	# 	# lcb.packet.right[end-idx] *= lcb.packet.centre[end-idx]*(1 - lcb.bell.interior[idx+begin]) / lcb.bell.interior[idx+begin]
@@ -41,15 +46,13 @@ function unfold!(lcb::LocalCosineBasis)
 	front = 1:m
 
 	lcb.packet.left = lcb.bell.exterior[reverse(front)] .* lcb.packet.centre[front]
+	# lcb.packet.right= (-1) .* reverse(lcb.bell.exterior) .* lcb.packet.centre[back]
 	lcb.packet.right= (-1) .* lcb.bell.exterior[reverse(front)] .* lcb.packet.centre[back]
 
 	lcb.packet.centre[front] .*=  lcb.bell.interior
 	lcb.packet.centre[back]  .*=  lcb.bell.interior
 
-
-
-
-# 	for i in 0:lcb.m-1
+#  for i in 0:lcb.m-1
 # 		lcb.packet.left[end-i] = lcb.packet.centre[i+begin] * lcb.bell.exterior[end-i]
 # 		lcb.packet.right[i+begin] = -lcb.packet.centre[end-i] * lcb.bell.exterior[end-i]
 # #UNCSURE OF ABOVE
